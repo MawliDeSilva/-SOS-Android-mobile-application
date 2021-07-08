@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     public void sendSMS(View view) {
-        String mobileNo = "0716136837";
+        String mobileNo = "xxxxxxxxx";
 
         try {
             SmsManager smgr = SmsManager.getDefault();
