@@ -8,11 +8,13 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -20,6 +22,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.Date;
 
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
@@ -38,9 +42,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PackageManager.PERMISSION_GRANTED);
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PackageManager.PERMISSION_GRANTED);
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PackageManager.PERMISSION_GRANTED);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.INTERNET}, PackageManager.PERMISSION_GRANTED);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -52,27 +54,36 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        longitude = lastKnownLocation.getLongitude();
-        latitude = lastKnownLocation.getLatitude();
-        System.out.println(longitude);
-        System.out.println(latitude);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000*60, 100, this);
+
     }
 
     public void sendSMS(View view) {
-        String mobileNo = "xxxxxxxxx";
+        String mobileNo = "0716332197";
+//        String mobileNo = "0719617436";
+        long startTime = System.currentTimeMillis();
+        while((System.currentTimeMillis() - startTime) < 3*60*1000){
+            @SuppressLint("MissingPermission") Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            longitude = lastKnownLocation.getLongitude();
+            latitude = lastKnownLocation.getLatitude();
+            try {
+                SmsManager smgr = SmsManager.getDefault();
+                String location ="http://maps.google.com/?q="+Double.toString(latitude)+","+Double.toString(longitude);
+//            smgr.sendTextMessage(mobileNo, null, Double.toString(latitude), null, null);
+                smgr.sendTextMessage(mobileNo, null, "I'm Mawli (IM/2017/015)", null, null);
+                smgr.sendTextMessage(mobileNo, null, "I'm in " +location, null, null);
+                Toast.makeText(getApplicationContext(), "SMS Sent to " + mobileNo, Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(), "SMS Sending failed", Toast.LENGTH_LONG).show();
+            }
 
-        try {
-            SmsManager smgr = SmsManager.getDefault();
-            String location ="http://maps.google.com/?q="+Double.toString(latitude)+","+Double.toString(longitude);
-
-            smgr.sendTextMessage(mobileNo, null, "I’m Mawli De Silva.Please Help Me. I'm in "+String.valueOf(latitude)+String.valueOf(longitude), null, null);
-            smgr.sendTextMessage(mobileNo, null, "I’m Mawli De Silva.Please Help Me. I'm in " + location, null, null);
-            Toast.makeText(getApplicationContext(), "SMS Sent to " + mobileNo, Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "SMS Sending failed", Toast.LENGTH_LONG).show();
+            try {
+                Thread.sleep(1000*60);
+            } catch (InterruptedException e) {
+                Toast.makeText(getApplicationContext(), "Interrupted", Toast.LENGTH_LONG).show();
+            }
         }
+
     }
 
     @SuppressLint("MissingPermission")
